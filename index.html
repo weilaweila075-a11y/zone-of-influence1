@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Zone of Influence — VK Online</title>
+<style>
+body{margin:0;font-family:Arial;background:#121212;color:#eee}
+.game{max-width:1100px;margin:auto;padding:20px}
+.panel{background:#1e1e1e;padding:15px;border-radius:8px;box-shadow:0 0 10px #000;position:relative}
+a.loginLink{display:inline-block;padding:10px 20px;background:#333;color:#fff;border-radius:6px;text-decoration:none;transition:0.2s}
+a.loginLink:hover{background:#555;transform:scale(1.05);}
+#playerAvatar{width:80px;height:80px;background:#444;border-radius:50%;margin-bottom:10px;animation:idle 1s infinite alternate;}
+@keyframes idle{0%{transform:translateY(0);}100%{transform:translateY(-5px);}}
+.effect{position:absolute;width:20px;height:20px;border-radius:50%;background:red;animation:hit 0.5s ease-out;pointer-events:none;}
+@keyframes hit{0%{transform:scale(1);opacity:1;}100%{transform:scale(2);opacity:0;}}
+.item{background:#2a2a2a;padding:6px;margin:4px 0;border-radius:4px;transition:0.2s}
+.item:hover{background:#444;transform:scale(1.05);}
+button{margin:3px;padding:6px 12px;background:#333;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+button:hover{background:#555;}
+</style>
+</head>
+<body>
+<div class="game">
+<div id="loginPanel" class="panel">
+<h3>Вход через VK</h3>
+<a href="#" id="vkLoginLink" class="loginLink">Войти через VK</a>
+<p id="loginMsg"></p>
+</div>
+
+<div id="gamePanel" style="display:none">
+<div class="panel">
+<div id="playerAvatar"></div>
+<h3 id="areaName"></h3>
+<p id="areaDesc"></p>
+<button onclick="task()">Занятие (-1)</button>
+<button onclick="fightNPC()">Разборка (-2)</button>
+<button onclick="bossFight()">Лидер района (-3)</button>
+</div>
+
+<div class="panel">
+<h3>Персонаж</h3>
+<p>Имя: <span id="usernameDisplay"></span></p>
+<p>Бригада: <span id="brigadeName">—</span></p>
+<p>Выносливость: <span id="energy"></span></p>
+<p>Уважение: <span id="respect"></span></p>
+<p>Респект: <span id="rep"></span></p>
+<p>Деньги: <span id="money"></span></p>
+<h4>Инвентарь</h4>
+<div id="inv"></div>
+<button onclick="buyItem()">Купить предмет (20$)</button>
+</div>
+
+<div class="panel">
+<h3>PvP / Бригады</h3>
+<button onclick="pvpFight()">Напасть на игрока (-2)</button>
+<button onclick="brigadeFight()">Битва бригад (-5)</button>
+<p id="pvpLog"></p>
+</div>
+</div>
+</div>
+
+<script>
+let player={};
+const areas=[{name:'Нижний сектор',desc:'Начальный район',need:0},{name:'Промзона',desc:'Опаснее, но прибыльнее',need:20},{name:'Центр влияния',desc:'Высший уровень',need:60}];
+let currentArea=0;
+
+const vkAppId='YOUR_VK_APP_ID'; // <- вставь сюда свой VK APP_ID
+const redirectUri=window.location.href;
+
+document.getElementById('vkLoginLink').addEventListener('click', function(e){
+    e.preventDefault();
+    const vkUrl = `https://oauth.vk.com/authorize?client_id=${vkAppId}&display=popup&redirect_uri=${redirectUri}&scope=offline&response_type=token&v=5.131`;
+    window.open(vkUrl,'_blank','width=600,height=500');
+});
+
+window.addEventListener('message',(event)=>{
+    if(event.data.access_token){
+        loadProfile(event.data.access_token);
+    }
+});
+
+function loadProfile(token){
+    let saved = localStorage.getItem('zonePlayer');
+    player = saved ? JSON.parse(saved) : {};
+    player.vk_token = token;
+    if(!player.username) player.username='Игрок';
+    if(!player.energy) player.energy=10;
+    if(!player.respect) player.respect=0;
+    if(!player.rep) player.rep=0;
+    if(!player.money) player.money=30;
+    if(!player.inventory) player.inventory=[];
+    if(!player.brigade) player.brigade=null;
+    localStorage.setItem('zonePlayer',JSON.stringify(player));
+
+    document.getElementById('loginPanel').style.display='none';
+    document.getElementById('gamePanel').style.display='block';
+    update();
+}
+
+function save(){localStorage.setItem('zonePlayer',JSON.stringify(player));}
+
+const energyEl=document.getElementById('energy');
+const respectEl=document.getElementById('respect');
+const repEl=document.getElementById('rep');
+const moneyEl=document.getElementById('money');
+const are
